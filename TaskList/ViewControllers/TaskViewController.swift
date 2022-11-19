@@ -6,8 +6,14 @@
 //
 
 import UIKit
+//import CoreData
 
 final class TaskViewController: UIViewController {
+    
+    var delegate: TaskViewControllerDelegate!
+    
+    private let viewContex = StorageManager.shared.persistentContainer.viewContext
+    //private let viewContex = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     private lazy var taskTextField: UITextField = {
         let textField = UITextField()
@@ -18,7 +24,7 @@ final class TaskViewController: UIViewController {
     
     private lazy var saveButton: UIButton = {
         createButton(whithTitle: "Save Task", andColor: .systemGray3,
-                     action: UIAction { [unowned self] _ in  dismiss(animated: true)
+                     action: UIAction { [unowned self] _ in save()
         })
     }()
     
@@ -69,8 +75,23 @@ final class TaskViewController: UIViewController {
         attributes.font = UIFont.boldSystemFont(ofSize: 18)
         
         var buttonConfig = UIButton.Configuration.filled()
-        buttonConfig.attributedTitle = AttributedString("title", attributes: attributes)
+        buttonConfig.attributedTitle = AttributedString(title, attributes: attributes)
         buttonConfig.baseBackgroundColor = color
         return UIButton(configuration: buttonConfig, primaryAction: action)
+    }
+    
+    private func save() {
+        let task = Task(context: viewContex)
+        task.title = taskTextField.text
+        
+        if viewContex.hasChanges {
+            do {
+                try viewContex.save()
+            } catch let error {
+                print(error.localizedDescription)
+            }
+        }
+        delegate.reloadData()
+        dismiss(animated: true)
     }
 }
