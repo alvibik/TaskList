@@ -7,17 +7,22 @@
 
 import UIKit
 
+//MARK: Protocol declaration
+
 protocol TaskViewControllerDelegate{
     func reloadData()
 }
 
 final class TaskListViewController: UITableViewController {
     
+    //MARK: - Private properties
+    
     private let viewContext = StorageManager.shared.persistentContainer.viewContext
-    //private let viewContex = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     private let cellID = "task"
     private var taskList: [Task] = []
+    
+    //MARK: - Override methods of super class
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,6 +31,8 @@ final class TaskListViewController: UITableViewController {
         setupNavigationBar()
         fetchData()
     }
+    
+    //MARK: - Private methods
     
     private func setupNavigationBar() {
         title = "Task List"
@@ -50,49 +57,22 @@ final class TaskListViewController: UITableViewController {
         
         navigationController?.navigationBar.tintColor = .white
         navigationItem.rightBarButtonItems = [addWitchAlertController, addWitchVC]
-        
-//        navigationItem.leftBarButtonItem = UIBarButtonItem(
-//            barButtonSystemItem: tableView.isEditing ? .done : .edit,
-//                    //.edit,
-//            target:
-//                self,
-//            action: #selector(toggleEdit)
-//        )
     }
     
     @objc private func addNewTask() {
         showAlertAdd(witchTitle: "New task", andMessage: "What do you want to do?")
-//        let taskVC = TaskViewController()
-//        taskVC.delegate = self
-//        present(taskVC, animated: true)
-    }
-    
-    @objc private func addNewTaskWitchVC() {
-        
         let taskVC = TaskViewController()
         taskVC.delegate = self
         present(taskVC, animated: true)
     }
     
-//    @objc private func toggleEdit() {
-//        tableView.setEditing(!tableView.isEditing, animated: true)
-////        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: (tableView.isEditing) ? .done : .edit, menu: UIMenu?)
-//
-////        if tableView.isEditing {
-////                rightBarButtonItem?.title = "Done"
-////            } else {
-////                rightBarButtonItem?.title = "Edit"
-////            }
-//    }
-    
-    private func fetchData() {
-        let fetchRequest = Task.fetchRequest()
-        do {
-            try taskList = viewContext.fetch(fetchRequest)
-        } catch let error {
-            print(error.localizedDescription)
-        }
+    @objc private func addNewTaskWitchVC() {
+        let taskVC = TaskViewController()
+        taskVC.delegate = self
+        present(taskVC, animated: true)
     }
+    
+    //MARK: - Private methods ShowAlerts
     
     private func showAlertAdd(witchTitle title: String, andMessage message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -109,20 +89,37 @@ final class TaskListViewController: UITableViewController {
         
         present(alert, animated: true)
     }
-    private func showAlertEdit(witchTitle title: String, andMessage message: String) {
+    private func showAlertEdit(task: Task?, witchTitle title: String, andMessage message: String, completion: @escaping () -> ()) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        let editAction = UIAlertAction(title: "Edit", style: .default) { [unowned self] _ in
-            guard let task = alert.textFields?.first?.text, !task.isEmpty else { return }
-            //StorageManager.shared.update(task, newName: task)
-        }
+        let editAction = UIAlertAction(title: "Save", style: .default) { _ in
+            guard let newName = alert.textFields?.first?.text else { return }
+                if let task = task {
+                    StorageManager.shared.update(task, newName: newName)
+                    completion()
+                } else {
+                    return
+                }
+            }
         let cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
         alert.addAction(editAction)
         alert.addAction(cancelAction)
         alert.addTextField { textField in
             textField.placeholder = "Enter Task"
+            textField.text = task?.title
         }
-        
+
         present(alert, animated: true)
+    }
+
+    //MARK: - Private method working witch Core Data
+    
+    private func fetchData() {
+        let fetchRequest = Task.fetchRequest()
+        do {
+            try taskList = viewContext.fetch(fetchRequest)
+        } catch let error {
+            print(error.localizedDescription)
+        }
     }
     
     private func save(_ taskName: String) {
@@ -141,6 +138,8 @@ final class TaskListViewController: UITableViewController {
         }
     }
 }
+
+//MARK: - Extension TaskListViewController
 
 extension TaskListViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -175,16 +174,13 @@ extension TaskListViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         let task = taskList[indexPath.row]
-//        showAlertEdit(witchTitle: task) {
+        showAlertEdit(task: task, witchTitle: "Edit task", andMessage: "What do you want to do?"){
             tableView.reloadRows(at: [indexPath], with: .automatic)
         }
     }
-//    func tableview(_ tableView: UITableView, moveRowAt sourceIndexPath: IndexPath, to destinationIndexPath: IndexPath) {
-//        let moveTaskTemp = taskList[sourceIndexPath.item]
-//        taskList.remove(at: sourceIndexPath.item)
-//        taskList.insert(moveTaskTemp, at: destinationIndexPath.item)
-//    }
-//}
+}
+
+//MARK: - Extension TaskViewControllerDelegate
 
 extension TaskListViewController: TaskViewControllerDelegate {
     func reloadData() {
@@ -192,21 +188,3 @@ extension TaskListViewController: TaskViewControllerDelegate {
         tableView.reloadData()
     }
 }
-
-//// MARK: - Alert Controller
-//extension TaskListViewController {
-//    private func showAlert1(task: Task? = nil, completion: (() -> Void)? = nil){
-//    let title = task != nil ? "Update Task" : "New Task"
-//    let alert = UIAlertController.createAlertController(withTitle: title)
-//    alert.action (task: task) { taskName in
-//        if let task = task, let completion = completion {
-//            StorageManager.shared.update (task, newName: taskName)
-//            completion ()
-//        } else {
-//            self.save (taskName: taskName)
-//        }
-//    }
-//    present (alert, animated: true)
-//    }
-//}
-

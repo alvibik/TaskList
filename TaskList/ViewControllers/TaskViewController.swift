@@ -6,14 +6,16 @@
 //
 
 import UIKit
-//import CoreData
 
 final class TaskViewController: UIViewController {
     
+    //MARK: - Public properties
+    
     var delegate: TaskViewControllerDelegate!
     
+    //MARK: - Private properties
+    
     private let viewContex = StorageManager.shared.persistentContainer.viewContext
-    //private let viewContex = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     private lazy var taskTextField: UITextField = {
         let textField = UITextField()
@@ -34,12 +36,16 @@ final class TaskViewController: UIViewController {
         })
     }()
     
+    //MARK: - Override methods of super class
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupSubViews(taskTextField, saveButton, cancelButton)
         setConstraints()
     }
+    
+    //MARK: - Private methods
     
     private func setupSubViews(_ subViews: UIView...) {
         subViews.forEach { subView in
