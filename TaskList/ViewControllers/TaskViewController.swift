@@ -15,8 +15,6 @@ final class TaskViewController: UIViewController {
     
     //MARK: - Private properties
     
-    private let viewContex = StorageManager.shared.persistentContainer.viewContext
-    
     private lazy var taskTextField: UITextField = {
         let textField = UITextField()
         textField.borderStyle = .roundedRect
@@ -26,7 +24,12 @@ final class TaskViewController: UIViewController {
     
     private lazy var saveButton: UIButton = {
         createButton(whithTitle: "Save Task", andColor: .systemGray3,
-                     action: UIAction { [unowned self] _ in save()
+                     action: UIAction { [unowned self] _ in
+            if let task = taskTextField.text, task != "" {
+                save(taskName: task)
+            } else {
+                return
+            }
         })
     }()
     
@@ -85,19 +88,12 @@ final class TaskViewController: UIViewController {
         buttonConfig.baseBackgroundColor = color
         return UIButton(configuration: buttonConfig, primaryAction: action)
     }
-    
-    private func save() {
-        let task = Task(context: viewContex)
-        task.title = taskTextField.text
-        
-        if viewContex.hasChanges {
-            do {
-                try viewContex.save()
-            } catch let error {
-                print(error.localizedDescription)
-            }
+
+    private func save(taskName: String) {
+        StorageManager.shared.create(taskName) { task in
+            delegate.reloadData()
+            dismiss(animated: true)
         }
-        delegate.reloadData()
-        dismiss(animated: true)
     }
+
 }
